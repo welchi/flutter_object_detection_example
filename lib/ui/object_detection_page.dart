@@ -17,6 +17,7 @@ class ObjectDetectionPage extends HookWidget {
         title: const Text('Object Detection'),
       ),
       body: mlCamera.when(
+        // MLCameraセットアップ後の表示
         data: (mlCamera) => Stack(
           children: [
             // カメラプレビューを表示
@@ -31,9 +32,11 @@ class ObjectDetectionPage extends HookWidget {
             ),
           ],
         ),
+        // MLCamera読み込み中の表示
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
+        // エラー時の表示
         error: (err, stack) => Center(
           child: Text(
             err.toString(),
