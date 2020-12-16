@@ -11,7 +11,7 @@ class ObjectDetectionPage extends HookWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final mlCamera = useProvider(mlCameraProvider(size));
-    final recognitions = useProvider(recognitionsProvider)
+    final recognitions = useProvider(recognitionsProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),
@@ -24,7 +24,11 @@ class ObjectDetectionPage extends HookWidget {
               mlCamera.cameraController,
             ),
             // バウンディングボックスを表示
-            buildBoxes(recognitions.state),
+            buildBoxes(
+              recognitions.state,
+              mlCamera.actualPreviewSize,
+              mlCamera.ratio,
+            ),
           ],
         ),
         loading: () => const Center(
@@ -42,19 +46,25 @@ class ObjectDetectionPage extends HookWidget {
   /// バウンディングボックスを構築
   Widget buildBoxes(
     List<Recognition> recognitions,
+    Size actualPreviewSize,
+    double ratio,
   ) {
     if (recognitions == null || recognitions.isEmpty) {
       return const SizedBox();
     }
     return Stack(
       children: recognitions.map((result) {
-        return BoundingBox(result);
+        return BoundingBox(
+          result,
+          actualPreviewSize,
+          ratio,
+        );
       }).toList(),
     );
   }
 }
 
-class CameraView extends HookWidget {
+class CameraView extends StatelessWidget {
   const CameraView(
     this.cameraController,
   );
@@ -63,9 +73,7 @@ class CameraView extends HookWidget {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: cameraController.value.aspectRatio,
-      child: CameraPreview(
-        cameraController
-      ),
+      child: CameraPreview(cameraController),
     );
   }
 }
@@ -73,17 +81,17 @@ class CameraView extends HookWidget {
 class BoundingBox extends HookWidget {
   const BoundingBox(
     this.result,
+    this.actualPreviewSize,
+    this.ratio,
   );
   final Recognition result;
-
+  final Size actualPreviewSize;
+  final double ratio;
   @override
   Widget build(BuildContext context) {
-    final odController = useProvider(
-      objectDetectionControllerProvider,
-    );
     final renderLocation = result.getRenderLocation(
-      odController.mlCamera.actualPreviewSize,
-      odController.mlCamera.ratio,
+      actualPreviewSize,
+      ratio,
     );
     return Positioned(
       left: renderLocation.left,
