@@ -38,21 +38,22 @@ class MLCamera {
   ) {
     Future(() async {
       classifier = Classifier();
+      ratio = Platform.isAndroid
+          ? cameraViewSize.width / cameraController.value.previewSize.height
+          : cameraViewSize.width / cameraController.value.previewSize.width;
       await cameraController.startImageStream(onLatestImageAvailable);
     });
   }
   final Reader _read;
   final CameraController cameraController;
+  Size cameraViewSize;
+  double ratio;
+  Classifier classifier;
+  bool isPredicting = false;
   Size get actualPreviewSize => Size(
         cameraViewSize.width,
         cameraViewSize.width * ratio,
       );
-  Size cameraViewSize;
-  double get ratio => Platform.isAndroid
-      ? cameraViewSize.width / cameraController.value.previewSize.height
-      : cameraViewSize.width / cameraController.value.previewSize.width;
-  Classifier classifier;
-  bool isPredicting = false;
 
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
     if (classifier.interpreter == null || classifier.labels == null) {
@@ -62,7 +63,7 @@ class MLCamera {
       return;
     }
     isPredicting = true;
-    final isolateCamImgData = _IsolateCamImgData(
+    final isolateCamImgData = IsolateData(
       cameraImage: cameraImage,
       interpreterAddress: classifier.interpreter.address,
       labels: classifier.labels,
@@ -73,7 +74,7 @@ class MLCamera {
   }
 
   static Future<List<Recognition>> inference(
-      _IsolateCamImgData isolateCamImgData) async {
+      IsolateData isolateCamImgData) async {
     var image = ImageUtils.convertYUV420ToImage(
       isolateCamImgData.cameraImage,
     );
@@ -92,8 +93,8 @@ class MLCamera {
   }
 }
 
-class _IsolateCamImgData {
-  _IsolateCamImgData({
+class IsolateData {
+  IsolateData({
     this.cameraImage,
     this.interpreterAddress,
     this.labels,
