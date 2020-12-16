@@ -118,6 +118,7 @@ class BoundingBox extends HookWidget {
     );
   }
 
+  /// 認識結果のラベルを表示
   Align buildBoxLabel(Recognition result, BuildContext context) {
     return Align(
       alignment: Alignment.topLeft,
