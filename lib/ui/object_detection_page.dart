@@ -103,24 +103,24 @@ class BoundingBox extends HookWidget {
         height: renderLocation.height,
         decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.red,
+            color: Theme.of(context).accentColor,
             width: 3,
           ),
           borderRadius: const BorderRadius.all(
             Radius.circular(2),
           ),
         ),
-        child: buildBoxLabel(result),
+        child: buildBoxLabel(result, context),
       ),
     );
   }
 
-  Align buildBoxLabel(Recognition result) {
+  Align buildBoxLabel(Recognition result, BuildContext context) {
     return Align(
       alignment: Alignment.topLeft,
       child: FittedBox(
         child: ColoredBox(
-          color: Colors.blue,
+          color: Theme.of(context).accentColor,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

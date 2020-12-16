@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -45,17 +44,29 @@ class MLCamera {
         cameraViewSize.width,
         cameraViewSize.width * ratio,
       );
+      // 画像ストリーミングを開始
       await cameraController.startImageStream(onLatestImageAvailable);
     });
   }
   final Reader _read;
   final CameraController cameraController;
+
+  /// スクリーンのサイズ
   Size cameraViewSize;
+
+  /// アスペクト比
   double ratio;
+
+  /// 識別器
   Classifier classifier;
+
+  /// 現在推論中か否か
   bool isPredicting = false;
+
+  /// カメラプレビューの表示サイズ
   Size actualPreviewSize;
 
+  /// 画像ストリーミングに対する処理
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
     if (classifier.interpreter == null || classifier.labels == null) {
       return;
@@ -69,11 +80,15 @@ class MLCamera {
       interpreterAddress: classifier.interpreter.address,
       labels: classifier.labels,
     );
+
+    // 推論処理は重く、Isolateを使わないと画面が固まる
     _read(recognitionsProvider).state =
         await compute(inference, isolateCamImgData);
     isPredicting = false;
   }
 
+  /// Isolateへ渡す推論関数
+  /// Isolateには、static関数か、クラスに属さないトップレベル関数しか渡せないため、staticに
   static Future<List<Recognition>> inference(
       IsolateData isolateCamImgData) async {
     var image = ImageUtils.convertYUV420ToImage(
@@ -103,5 +118,4 @@ class IsolateData {
   final CameraImage cameraImage;
   final int interpreterAddress;
   final List<String> labels;
-  SendPort responsePort;
 }
