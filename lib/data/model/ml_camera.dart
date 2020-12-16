@@ -6,11 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/classifier.dart';
+import 'package:flutter_object_detection_example/util/image_utils.dart';
 import 'package:flutter_object_detection_example/util/logger.dart';
-import 'package:flutter_playground/data/model/entities/entities.dart';
-import 'package:flutter_playground/data/model/model.dart';
-import 'package:flutter_playground/util/image_utils.dart';
-import 'package:flutter_playground/util/logger.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image/image.dart' as image_lib;
@@ -47,8 +44,6 @@ class MLCamera {
   }
   final Reader _read;
   final CameraController cameraController;
-  // Size inputImageSize;
-  // Size get inputImageSize => cameraController.value.previewSize;
   Size get actualPreviewSize => Size(
         viewSize.width,
         viewSize.width * ratio,
@@ -61,17 +56,8 @@ class MLCamera {
   bool isPredicting = false;
 
   void initScreenInfo(Size cameraViewSize) {
-    // コントローラがキャプチャした、各画像フレームのサイズ
-    // final previewSize = cameraController.value.previewSize;
-    // logger.info('previewSize: $previewSize');
-    // inputImageSize = previewSize;
     viewSize = cameraViewSize;
     logger.info('screenSize: $viewSize');
-    // if (Platform.isAndroid) {
-    //   ratio = viewSize.width / previewSize.height;
-    // } else {
-    //   ratio = viewSize.width / previewSize.width;
-    // }
   }
 
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
