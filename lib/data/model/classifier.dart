@@ -1,8 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
-import 'package:flutter_playground/data/model/entities/entities.dart';
-import 'package:flutter_playground/util/logger.dart';
+import 'package:flutter_object_detection_example/util/logger.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
@@ -25,6 +24,8 @@ class Classifier {
 
   /// インタプリタへ入力する画像のサイズ
   static const int inputSize = 300;
+
+  /// 推論結果として表示する閾値
   static const double threshold = 0.6;
 
   /// 画像の前処理用
@@ -142,7 +143,7 @@ class Classifier {
       width: inputSize,
     );
 
-    // 推論結果からRecognition型データを作成
+    // 推論結果からRecognitionを作成
     final recognitions = <Recognition>[];
     for (var i = 0; i < resultCount; i++) {
       final score = outputScores.getDoubleValue(i);
