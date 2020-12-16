@@ -62,7 +62,7 @@ class Classifier {
   /// assetsからラベルを読み込み
   Future<void> loadLabels(List<String> labels) async {
     try {
-      _labels = labels ?? await FileUtil.loadLabels('$labelFileName');
+      _labels = labels ?? await FileUtil.loadLabels('assets/$labelFileName');
     } on Exception catch (e) {
       logger.warning(e);
     }

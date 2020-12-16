@@ -41,6 +41,10 @@ class MLCamera {
       ratio = Platform.isAndroid
           ? cameraViewSize.width / cameraController.value.previewSize.height
           : cameraViewSize.width / cameraController.value.previewSize.width;
+      actualPreviewSize = Size(
+        cameraViewSize.width,
+        cameraViewSize.width * ratio,
+      );
       await cameraController.startImageStream(onLatestImageAvailable);
     });
   }
@@ -50,10 +54,7 @@ class MLCamera {
   double ratio;
   Classifier classifier;
   bool isPredicting = false;
-  Size get actualPreviewSize => Size(
-        cameraViewSize.width,
-        cameraViewSize.width * ratio,
-      );
+  Size actualPreviewSize;
 
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
     if (classifier.interpreter == null || classifier.labels == null) {
