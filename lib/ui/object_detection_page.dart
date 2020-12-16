@@ -14,7 +14,6 @@ class ObjectDetectionPage extends HookWidget {
   Widget build(BuildContext context) {
     final recognitions = useProvider(recognitionsProvider);
     final size = MediaQuery.of(context).size;
-    logger.info('mediaSize0: ${size.toString()}');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),
