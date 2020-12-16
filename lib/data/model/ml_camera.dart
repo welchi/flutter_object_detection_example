@@ -7,15 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/classifier.dart';
 import 'package:flutter_object_detection_example/util/image_utils.dart';
-import 'package:flutter_object_detection_example/util/logger.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 final recognitionsProvider = StateProvider<List<Recognition>>((ref) => []);
 
-final mlCameraProvider = FutureProvider.autoDispose<MLCamera>((ref) async {
+final mlCameraProvider =
+    FutureProvider.autoDispose.family<MLCamera, Size>((ref, size) async {
   final cameras = await availableCameras();
   final cameraController = CameraController(
     cameras[0],
@@ -26,6 +25,7 @@ final mlCameraProvider = FutureProvider.autoDispose<MLCamera>((ref) async {
   final mlCamera = MLCamera(
     ref.read,
     cameraController,
+    size,
   );
   return mlCamera;
 });
@@ -34,31 +34,25 @@ class MLCamera {
   MLCamera(
     this._read,
     this.cameraController,
+    this.cameraViewSize,
   ) {
     Future(() async {
       classifier = Classifier();
-      viewSize = ScreenUtil().uiSize;
-      initScreenInfo(viewSize);
       await cameraController.startImageStream(onLatestImageAvailable);
     });
   }
   final Reader _read;
   final CameraController cameraController;
   Size get actualPreviewSize => Size(
-        viewSize.width,
-        viewSize.width * ratio,
+        cameraViewSize.width,
+        cameraViewSize.width * ratio,
       );
-  Size viewSize;
+  Size cameraViewSize;
   double get ratio => Platform.isAndroid
-      ? viewSize.width / cameraController.value.previewSize.height
-      : viewSize.width / cameraController.value.previewSize.width;
+      ? cameraViewSize.width / cameraController.value.previewSize.height
+      : cameraViewSize.width / cameraController.value.previewSize.width;
   Classifier classifier;
   bool isPredicting = false;
-
-  void initScreenInfo(Size cameraViewSize) {
-    viewSize = cameraViewSize;
-    logger.info('screenSize: $viewSize');
-  }
 
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
     if (classifier.interpreter == null || classifier.labels == null) {
