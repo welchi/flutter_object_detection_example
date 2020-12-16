@@ -1,10 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_playground/data/model/controllers/controllers.dart';
-import 'package:flutter_playground/data/model/entities/entities.dart';
-import 'package:flutter_playground/data/model/model.dart';
-import 'package:flutter_playground/util/logger.dart';
+import 'package:flutter_object_detection_example/data/entity/recognition.dart';
+import 'package:flutter_object_detection_example/data/model/ml_camera.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ObjectDetectionPage extends HookWidget {
@@ -20,7 +18,13 @@ class ObjectDetectionPage extends HookWidget {
       ),
       body: Stack(
         children: [
-          const _CameraView(),
+          AspectRatio(
+            aspectRatio:
+                odController.mlCamera.cameraController.value.aspectRatio,
+            child: CameraPreview(
+              odController.mlCamera.cameraController,
+            ),
+          ),
           buildBoxes(
             recognitions.state,
           ),
@@ -43,26 +47,26 @@ class ObjectDetectionPage extends HookWidget {
   }
 }
 
-class _CameraView extends HookWidget {
-  const _CameraView({
-    Key key,
-  }) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    final odController = useProvider(
-      objectDetectionControllerProvider,
-    );
-    final size = MediaQuery.of(context).size;
-    odController.mlCamera.initScreenInfo(size);
-    logger.info('mediaSize: ${size.toString()}');
-    return AspectRatio(
-      aspectRatio: odController.mlCamera.cameraController.value.aspectRatio,
-      child: CameraPreview(
-        odController.mlCamera.cameraController,
-      ),
-    );
-  }
-}
+// class _CameraView extends HookWidget {
+//   const _CameraView({
+//     Key key,
+//   }) : super(key: key);
+//   @override
+//   Widget build(BuildContext context) {
+//     final odController = useProvider(
+//       objectDetectionControllerProvider,
+//     );
+//     final size = MediaQuery.of(context).size;
+//     odController.mlCamera.initScreenInfo(size);
+//     logger.info('mediaSize: ${size.toString()}');
+//     return AspectRatio(
+//       aspectRatio: odController.mlCamera.cameraController.value.aspectRatio,
+//       child: CameraPreview(
+//         odController.mlCamera.cameraController,
+//       ),
+//     );
+//   }
+// }
 
 class BoundingBox extends HookWidget {
   const BoundingBox(
