@@ -12,23 +12,35 @@ class ObjectDetectionPage extends HookWidget {
   Widget build(BuildContext context) {
     final recognitions = useProvider(recognitionsProvider);
     final size = MediaQuery.of(context).size;
+    final mlCamera = useProvider(mlCameraProvider(size));
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),
       ),
-      body: Stack(
-        children: [
-          AspectRatio(
-            aspectRatio:
-                odController.mlCamera.cameraController.value.aspectRatio,
-            child: CameraPreview(
-              odController.mlCamera.cameraController,
-            ),
+      body: mlCamera.when(
+        data: (mlCamera) {
+          return Stack(
+            children: [
+              AspectRatio(
+                aspectRatio: mlCamera.cameraController.value.aspectRatio,
+                child: CameraPreview(
+                  mlCamera.cameraController,
+                ),
+              ),
+              buildBoxes(
+                recognitions.state,
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (err, stack) => Center(
+          child: Text(
+            err.toString(),
           ),
-          buildBoxes(
-            recognitions.state,
-          ),
-        ],
+        ),
       ),
     );
   }
