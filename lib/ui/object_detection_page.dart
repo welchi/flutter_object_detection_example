@@ -5,41 +5,47 @@ import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/ml_camera.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class ObjectDetectionPage extends HookWidget {
+class ObjectDetectionPage extends StatelessWidget {
   static String routeName = '/object_detection';
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Object Detection'),
+      ),
+      body: CameraView(),
+    );
+  }
+}
 
+class CameraView extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final recognitions = useProvider(recognitionsProvider);
     final size = MediaQuery.of(context).size;
     final mlCamera = useProvider(mlCameraProvider(size));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Object Detection'),
+    return mlCamera.when(
+      data: (mlCamera) {
+        return Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: mlCamera.cameraController.value.aspectRatio,
+              child: CameraPreview(
+                mlCamera.cameraController,
+              ),
+            ),
+            buildBoxes(
+              recognitions.state,
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
       ),
-      body: mlCamera.when(
-        data: (mlCamera) {
-          return Stack(
-            children: [
-              AspectRatio(
-                aspectRatio: mlCamera.cameraController.value.aspectRatio,
-                child: CameraPreview(
-                  mlCamera.cameraController,
-                ),
-              ),
-              buildBoxes(
-                recognitions.state,
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (err, stack) => Center(
-          child: Text(
-            err.toString(),
-          ),
+      error: (err, stack) => Center(
+        child: Text(
+          err.toString(),
         ),
       ),
     );
@@ -58,27 +64,6 @@ class ObjectDetectionPage extends HookWidget {
     );
   }
 }
-
-// class _CameraView extends HookWidget {
-//   const _CameraView({
-//     Key key,
-//   }) : super(key: key);
-//   @override
-//   Widget build(BuildContext context) {
-//     final odController = useProvider(
-//       objectDetectionControllerProvider,
-//     );
-//     final size = MediaQuery.of(context).size;
-//     odController.mlCamera.initScreenInfo(size);
-//     logger.info('mediaSize: ${size.toString()}');
-//     return AspectRatio(
-//       aspectRatio: odController.mlCamera.cameraController.value.aspectRatio,
-//       child: CameraPreview(
-//         odController.mlCamera.cameraController,
-//       ),
-//     );
-//   }
-// }
 
 class BoundingBox extends HookWidget {
   const BoundingBox(
