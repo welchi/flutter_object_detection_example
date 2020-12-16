@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_playground/data/model/entities/entities.dart';
 import 'package:flutter_playground/data/model/model.dart';
 import 'package:flutter_playground/util/image_utils.dart';
@@ -13,7 +14,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final recognitionsProvider = StateProvider<List<Recognitio>>((ref) => []);
+final recognitionsProvider = StateProvider<List<Recognition>>((ref) => []);
 
 final mlCameraProvider = FutureProvider.autoDispose<MLCamera>((ref) async {
   final cameras = await availableCameras();
