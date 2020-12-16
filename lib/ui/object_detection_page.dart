@@ -7,6 +7,64 @@ import 'package:flutter_playground/data/model/model.dart';
 import 'package:flutter_playground/util/logger.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+class ObjectDetectionPage extends HookWidget {
+  static String routeName = '/object_detection';
+
+  @override
+  Widget build(BuildContext context) {
+    final recognitions = useProvider(recognitionsProvider);
+    final size = MediaQuery.of(context).size;
+    logger.info('mediaSize0: ${size.toString()}');
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Object Detection'),
+      ),
+      body: Stack(
+        children: [
+          const _CameraView(),
+          buildBoxes(
+            recognitions.state,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildBoxes(
+    List<Recognition> recognitions,
+  ) {
+    if (recognitions == null || recognitions.isEmpty) {
+      return const SizedBox();
+    }
+    return Stack(
+      children: recognitions.map((result) {
+        return BoundingBox(result);
+      }).toList(),
+    );
+  }
+}
+
+class _CameraView extends HookWidget {
+  const _CameraView({
+    Key key,
+  }) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    final odController = useProvider(
+      objectDetectionControllerProvider,
+    );
+    final size = MediaQuery.of(context).size;
+    odController.mlCamera.initScreenInfo(size);
+    logger.info('mediaSize: ${size.toString()}');
+    return AspectRatio(
+      aspectRatio: odController.mlCamera.cameraController.value.aspectRatio,
+      child: CameraPreview(
+        odController.mlCamera.cameraController,
+      ),
+    );
+  }
+}
+
 class BoundingBox extends HookWidget {
   const BoundingBox(
     this.result,
@@ -62,64 +120,6 @@ class BoundingBox extends HookWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class ObjectDetectionPage extends HookWidget {
-  static String routeName = '/object_detection';
-
-  @override
-  Widget build(BuildContext context) {
-    final recognitions = useProvider(recognitionsProvider);
-    final size = MediaQuery.of(context).size;
-    logger.info('mediaSize0: ${size.toString()}');
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Object Detection'),
-      ),
-      body: Stack(
-        children: [
-          const _CameraView(),
-          buildBoxes(
-            recognitions.state,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildBoxes(
-    List<Recognition> recognitions,
-  ) {
-    if (recognitions == null || recognitions.isEmpty) {
-      return const SizedBox();
-    }
-    return Stack(
-      children: recognitions.map((result) {
-        return BoundingBox(result);
-      }).toList(),
-    );
-  }
-}
-
-class _CameraView extends HookWidget {
-  const _CameraView({
-    Key key,
-  }) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    final odController = useProvider(
-      objectDetectionControllerProvider,
-    );
-    final size = MediaQuery.of(context).size;
-    odController.mlCamera.initScreenInfo(size);
-    logger.info('mediaSize: ${size.toString()}');
-    return AspectRatio(
-      aspectRatio: odController.mlCamera.cameraController.value.aspectRatio,
-      child: CameraPreview(
-        odController.mlCamera.cameraController,
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_object_detection_example/ui/object_detection_page.dart';
 
 class MyApp extends HookWidget {
   const MyApp({Key key}) : super(key: key);
