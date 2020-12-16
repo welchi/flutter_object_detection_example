@@ -5,52 +5,41 @@ import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/ml_camera.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class ObjectDetectionPage extends StatelessWidget {
+class ObjectDetectionPage extends HookWidget {
   static String routeName = '/object_detection';
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final mlCamera = useProvider(mlCameraProvider(size));
+    final recognitions = useProvider(recognitionsProvider)
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),
       ),
-      body: CameraView(),
-    );
-  }
-}
-
-class CameraView extends HookWidget {
-  @override
-  Widget build(BuildContext context) {
-    final recognitions = useProvider(recognitionsProvider);
-    final size = MediaQuery.of(context).size;
-    final mlCamera = useProvider(mlCameraProvider(size));
-    return mlCamera.when(
-      data: (mlCamera) {
-        return Stack(
+      body: mlCamera.when(
+        data: (mlCamera) => Stack(
           children: [
-            AspectRatio(
-              aspectRatio: mlCamera.cameraController.value.aspectRatio,
-              child: CameraPreview(
-                mlCamera.cameraController,
-              ),
+            // カメラプレビューを表示
+            CameraView(
+              mlCamera.cameraController,
             ),
-            buildBoxes(
-              recognitions.state,
-            ),
+            // バウンディングボックスを表示
+            buildBoxes(recognitions.state),
           ],
-        );
-      },
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (err, stack) => Center(
-        child: Text(
-          err.toString(),
+        ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (err, stack) => Center(
+          child: Text(
+            err.toString(),
+          ),
         ),
       ),
     );
   }
 
+  /// バウンディングボックスを構築
   Widget buildBoxes(
     List<Recognition> recognitions,
   ) {
@@ -61,6 +50,22 @@ class CameraView extends HookWidget {
       children: recognitions.map((result) {
         return BoundingBox(result);
       }).toList(),
+    );
+  }
+}
+
+class CameraView extends HookWidget {
+  const CameraView(
+    this.cameraController,
+  );
+  final CameraController cameraController;
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: cameraController.value.aspectRatio,
+      child: CameraPreview(
+        cameraController
+      ),
     );
   }
 }
