@@ -13,7 +13,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final recognitionsProvider = StateProvider<List<Recognition>>((ref) => []);
+final recognitionsProvider = StateProvider<List<Recognitio>>((ref) => []);
 
 final mlCameraProvider = FutureProvider.autoDispose<MLCamera>((ref) async {
   final cameras = await availableCameras();
