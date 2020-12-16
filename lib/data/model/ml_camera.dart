@@ -5,6 +5,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
+import 'package:flutter_object_detection_example/data/model/classifier.dart';
+import 'package:flutter_object_detection_example/util/logger.dart';
 import 'package:flutter_playground/data/model/entities/entities.dart';
 import 'package:flutter_playground/data/model/model.dart';
 import 'package:flutter_playground/util/image_utils.dart';
