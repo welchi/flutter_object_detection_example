@@ -18,7 +18,6 @@ class Classifier {
   Interpreter get interpreter => _interpreter;
   List<String> _labels;
   List<String> get labels => _labels;
-  static const String assetsPath = 'assets/tflite/';
   static const String modelFileName = 'detect.tflite';
   static const String labelFileName = 'labelmap.txt';
 
@@ -45,7 +44,7 @@ class Classifier {
     try {
       _interpreter = interpreter ??
           await Interpreter.fromAsset(
-            'tflite/$modelFileName',
+            '$modelFileName',
             options: InterpreterOptions()..threads = 4,
           );
       final outputTensors = _interpreter.getOutputTensors();
@@ -63,8 +62,7 @@ class Classifier {
   /// assetsからラベルを読み込み
   Future<void> loadLabels(List<String> labels) async {
     try {
-      _labels =
-          labels ?? await FileUtil.loadLabels('$assetsPath$labelFileName');
+      _labels = labels ?? await FileUtil.loadLabels('$labelFileName');
     } on Exception catch (e) {
       logger.warning(e);
     }
