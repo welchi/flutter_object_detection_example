@@ -1,6 +1,6 @@
 # flutter_object_detection_example
 
-A Flutter project.
+A new Flutter project.
 
 ![](https://i.gyazo.com/89f6dce784735e90d967984a939fe3c8.gif)
 
