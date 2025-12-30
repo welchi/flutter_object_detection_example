@@ -9,6 +9,8 @@ def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
+def hasReleaseKey = keystorePropertiesFile.exists() &&
+        keystoreProperties['storeFile']
 
 android {
     namespace "com.goodwelchi.flutter_object_detection_example"
@@ -51,9 +53,8 @@ android {
     }
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.release
+            // Signing with debug keys if release keystore is not configured.
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

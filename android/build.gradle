@@ -13,6 +13,24 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
+subprojects { project ->
+    def namespaceMap = [
+        "camera_android": "io.flutter.plugins.camera",
+        "tflite_flutter": "com.tfliteflutter.tflite_flutter_plugin",
+        "tflite_flutter_helper": "com.tfliteflutter.tflite_flutter_helper",
+    ]
+    def namespaceValue = namespaceMap[project.name]
+    if (namespaceValue != null) {
+        project.afterEvaluate {
+            if (project.extensions.findByName("android") != null) {
+                project.android {
+                    namespace namespaceValue
+                }
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

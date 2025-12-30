@@ -1,0 +1,23 @@
+group 'com.tfliteflutter.tflite_flutter_plugin'
+version '1.0'
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.tfliteflutter.tflite_flutter_plugin"
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 24
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    lint {
+        disable 'InvalidPackage'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

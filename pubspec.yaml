@@ -9,7 +9,7 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  camera: ^0.9.8+1
+  camera: ^0.11.3
   flutter:
     sdk: flutter
   flutter_hooks: ^0.21.3+1
@@ -17,8 +17,10 @@ dependencies:
   hooks_riverpod: ^3.1.0
   image: ^3.3.0
   simple_logger: ^1.10.0
-  tflite_flutter: ^0.9.1
-  tflite_flutter_helper: ^0.3.1
+  tflite_flutter:
+    path: packages/tflite_flutter
+  tflite_flutter_helper:
+    path: packages/tflite_flutter_helper
 
 dev_dependencies:
   flutter_test:
