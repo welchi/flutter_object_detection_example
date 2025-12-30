@@ -7,12 +7,15 @@ import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/classifier.dart';
 import 'package:flutter_object_detection_example/util/image_utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/legacy.dart' as legacy;
+import 'package:hooks_riverpod/misc.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final recognitionsProvider = StateProvider<List<Recognition>>((ref) => []);
+final legacy.StateProvider<List<Recognition>> recognitionsProvider =
+    legacy.StateProvider<List<Recognition>>((ref) => <Recognition>[]);
 
-final mlCameraProvider =
+final FutureProviderFamily<MLCamera, Size> mlCameraProvider =
     FutureProvider.autoDispose.family<MLCamera, Size>((ref, size) async {
   final cameras = await availableCameras();
   final cameraController = CameraController(
@@ -21,77 +24,103 @@ final mlCameraProvider =
     enableAudio: false,
   );
   await cameraController.initialize();
-  final mlCamera = MLCamera(
-    ref.read,
-    cameraController,
-    size,
-  );
-  return mlCamera;
+  ref.onDispose(cameraController.dispose);
+  return MLCamera.create(ref, cameraController, size);
 });
 
 class MLCamera {
-  MLCamera(
-    this._read,
+  MLCamera._(
+    this._ref,
     this.cameraController,
     this.cameraViewSize,
-  ) {
-    Future(() async {
-      classifier = Classifier();
-      ratio = Platform.isAndroid
-          ? cameraViewSize.width / cameraController.value.previewSize.height
-          : cameraViewSize.width / cameraController.value.previewSize.width;
-      actualPreviewSize = Size(
-        cameraViewSize.width,
-        cameraViewSize.width * ratio,
-      );
-      // 画像ストリーミングを開始
-      await cameraController.startImageStream(onLatestImageAvailable);
-    });
+    this.classifier,
+    this.ratio,
+    this.actualPreviewSize,
+  );
+
+  static Future<MLCamera> create(
+    Ref ref,
+    CameraController cameraController,
+    Size cameraViewSize,
+  ) async {
+    final classifier = Classifier();
+    await classifier.initialize();
+
+    final previewSize = cameraController.value.previewSize;
+    if (previewSize == null) {
+      throw StateError('Camera preview size is unavailable.');
+    }
+
+    final ratio = Platform.isAndroid
+        ? cameraViewSize.width / previewSize.height
+        : cameraViewSize.width / previewSize.width;
+    final actualPreviewSize = Size(
+      cameraViewSize.width,
+      cameraViewSize.width * ratio,
+    );
+
+    final mlCamera = MLCamera._(
+      ref,
+      cameraController,
+      cameraViewSize,
+      classifier,
+      ratio,
+      actualPreviewSize,
+    );
+    await cameraController.startImageStream(mlCamera.onLatestImageAvailable);
+    return mlCamera;
   }
-  final Reader _read;
+
+  final Ref _ref;
   final CameraController cameraController;
 
   /// スクリーンのサイズ
-  Size cameraViewSize;
+  final Size cameraViewSize;
 
   /// アスペクト比
-  double ratio;
+  final double ratio;
 
   /// 識別器
-  Classifier classifier;
+  final Classifier classifier;
 
   /// 現在推論中か否か
   bool isPredicting = false;
 
   /// カメラプレビューの表示サイズ
-  Size actualPreviewSize;
+  final Size actualPreviewSize;
 
   /// 画像ストリーミングに対する処理
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
-    if (classifier.interpreter == null || classifier.labels == null) {
-      return;
-    }
     if (isPredicting) {
       return;
     }
     isPredicting = true;
+    final interpreter = classifier.interpreter;
+    final labels = classifier.labels;
+    if (interpreter == null || labels == null) {
+      isPredicting = false;
+      return;
+    }
     final isolateCamImgData = IsolateData(
       cameraImage: cameraImage,
-      interpreterAddress: classifier.interpreter.address,
-      labels: classifier.labels,
+      interpreterAddress: interpreter.address,
+      labels: labels,
     );
 
     // 推論処理は重く、Isolateを使わないと画面が固まる
-    _read(recognitionsProvider).state =
-        await compute(inference, isolateCamImgData);
+    _ref.read(recognitionsProvider.notifier).state = await compute(
+      inference,
+      isolateCamImgData,
+    );
     isPredicting = false;
   }
 
   /// Isolateへ渡す推論関数
   /// Isolateには、static関数か、クラスに属さないトップレベル関数しか渡せないため、staticに
   static Future<List<Recognition>> inference(
-      IsolateData isolateCamImgData) async {
-    var image = ImageUtils.convertYUV420ToImage(
+    IsolateData isolateCamImgData,
+  ) async {
+    var image = convertYUV420ToImage(
       isolateCamImgData.cameraImage,
     );
     if (Platform.isAndroid) {
@@ -104,6 +133,7 @@ class MLCamera {
       ),
       labels: isolateCamImgData.labels,
     );
+    await classifier.initialize();
 
     return classifier.predict(image);
   }
@@ -111,9 +141,9 @@ class MLCamera {
 
 class IsolateData {
   IsolateData({
-    this.cameraImage,
-    this.interpreterAddress,
-    this.labels,
+    required this.cameraImage,
+    required this.interpreterAddress,
+    required this.labels,
   });
   final CameraImage cameraImage;
   final int interpreterAddress;

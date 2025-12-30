@@ -1,17 +1,18 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/ml_camera.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class ObjectDetectionPage extends HookWidget {
-  static String routeName = '/object_detection';
+class ObjectDetectionPage extends HookConsumerWidget {
+  const ObjectDetectionPage({super.key});
+
+  static const String routeName = '/object_detection';
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-    final mlCamera = useProvider(mlCameraProvider(size));
-    final recognitions = useProvider(recognitionsProvider);
+    final mlCamera = ref.watch(mlCameraProvider(size));
+    final recognitions = ref.watch(recognitionsProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),
@@ -26,7 +27,7 @@ class ObjectDetectionPage extends HookWidget {
             ),
             // バウンディングボックスを表示
             buildBoxes(
-              recognitions.state,
+              recognitions,
               mlCamera.actualPreviewSize,
               mlCamera.ratio,
             ),
@@ -52,7 +53,7 @@ class ObjectDetectionPage extends HookWidget {
     Size actualPreviewSize,
     double ratio,
   ) {
-    if (recognitions == null || recognitions.isEmpty) {
+    if (recognitions.isEmpty) {
       return const SizedBox();
     }
     return Stack(
@@ -69,8 +70,9 @@ class ObjectDetectionPage extends HookWidget {
 
 class CameraView extends StatelessWidget {
   const CameraView(
-    this.cameraController,
-  );
+    this.cameraController, {
+    super.key,
+  });
   final CameraController cameraController;
   @override
   Widget build(BuildContext context) {
@@ -81,12 +83,13 @@ class CameraView extends StatelessWidget {
   }
 }
 
-class BoundingBox extends HookWidget {
+class BoundingBox extends StatelessWidget {
   const BoundingBox(
     this.result,
     this.actualPreviewSize,
-    this.ratio,
-  );
+    this.ratio, {
+    super.key,
+  });
   final Recognition result;
   final Size actualPreviewSize;
   final double ratio;
@@ -106,7 +109,7 @@ class BoundingBox extends HookWidget {
         height: renderLocation.height,
         decoration: BoxDecoration(
           border: Border.all(
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
             width: 3,
           ),
           borderRadius: const BorderRadius.all(
@@ -124,7 +127,7 @@ class BoundingBox extends HookWidget {
       alignment: Alignment.topLeft,
       child: FittedBox(
         child: ColoredBox(
-          color: Theme.of(context).accentColor,
+          color: Theme.of(context).colorScheme.secondary,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

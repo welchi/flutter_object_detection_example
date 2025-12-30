@@ -1,20 +1,7 @@
-buildscript {
-    ext.kotlin_version = '1.3.50'
-    repositories {
-        google()
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 
@@ -26,6 +13,24 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
-task clean(type: Delete) {
+subprojects { project ->
+    def namespaceMap = [
+        "camera_android": "io.flutter.plugins.camera",
+        "tflite_flutter": "com.tfliteflutter.tflite_flutter_plugin",
+        "tflite_flutter_helper": "com.tfliteflutter.tflite_flutter_helper",
+    ]
+    def namespaceValue = namespaceMap[project.name]
+    if (namespaceValue != null) {
+        project.afterEvaluate {
+            if (project.extensions.findByName("android") != null) {
+                project.android {
+                    namespace namespaceValue
+                }
+            }
+        }
+    }
+}
+
+tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

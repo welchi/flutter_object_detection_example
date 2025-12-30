@@ -8,16 +8,16 @@ import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
 class Classifier {
   Classifier({
-    Interpreter interpreter,
-    List<String> labels,
+    Interpreter? interpreter,
+    List<String>? labels,
   }) {
-    loadModel(interpreter);
-    loadLabels(labels);
+    _interpreter = interpreter;
+    _labels = labels;
   }
-  Interpreter _interpreter;
-  Interpreter get interpreter => _interpreter;
-  List<String> _labels;
-  List<String> get labels => _labels;
+  Interpreter? _interpreter;
+  Interpreter? get interpreter => _interpreter;
+  List<String>? _labels;
+  List<String>? get labels => _labels;
   static const String modelFileName = 'detect.tflite';
   static const String labelFileName = 'labelmap.txt';
 
@@ -28,26 +28,35 @@ class Classifier {
   static const double threshold = 0.6;
 
   /// 画像の前処理用
-  ImageProcessor imageProcessor;
+  ImageProcessor? imageProcessor;
 
   /// インタプリタから受け取るTensorの次元
-  List<List<int>> _outputShapes;
+  List<List<int>> _outputShapes = const [];
 
   /// インタプリタから受け取るTensorのデータ型
-  List<TfLiteType> _outputTypes;
+  List<TfLiteType> _outputTypes = const [];
 
   /// 推論結果をいくつ表示するか
   static const int numResults = 10;
 
   /// assetsからインタプリタを読み込み
-  Future<void> loadModel(Interpreter interpreter) async {
+  Future<void> initialize() async {
+    await loadModel(_interpreter);
+    await loadLabels(_labels);
+  }
+
+  Future<void> loadModel(Interpreter? interpreter) async {
     try {
       _interpreter = interpreter ??
           await Interpreter.fromAsset(
-            '$modelFileName',
+            modelFileName,
             options: InterpreterOptions()..threads = 4,
           );
-      final outputTensors = _interpreter.getOutputTensors();
+      final localInterpreter = _interpreter;
+      if (localInterpreter == null) {
+        return;
+      }
+      final outputTensors = localInterpreter.getOutputTensors();
       _outputShapes = [];
       _outputTypes = [];
       for (final tensor in outputTensors) {
@@ -60,7 +69,7 @@ class Classifier {
   }
 
   /// assetsからラベルを読み込み
-  Future<void> loadLabels(List<String> labels) async {
+  Future<void> loadLabels(List<String>? labels) async {
     try {
       _labels = labels ?? await FileUtil.loadLabels('assets/$labelFileName');
     } on Exception catch (e) {
@@ -76,7 +85,7 @@ class Classifier {
       inputImage.width,
     );
 
-    imageProcessor ??= ImageProcessorBuilder()
+    final processor = imageProcessor ??= ImageProcessorBuilder()
         .add(
           // 画像を高さに合わせてクロップorパディング
           ResizeWithCropOrPadOp(
@@ -93,19 +102,27 @@ class Classifier {
           ),
         )
         .build();
-    return imageProcessor.process(inputImage);
+    return processor.process(inputImage);
   }
 
   /// 物体検出を行う
   List<Recognition> predict(image_lib.Image image) {
-    if (_interpreter == null) {
-      return null;
+    final localInterpreter = _interpreter;
+    final localLabels = _labels;
+    if (localInterpreter == null ||
+        localLabels == null ||
+        _outputShapes.isEmpty ||
+        _outputTypes.isEmpty) {
+      return <Recognition>[];
     }
-
     // ImageからTensorImageを作成
     var inputImage = TensorImage.fromImage(image);
     // TensorImageを前処理
     inputImage = getProcessedImage(inputImage);
+    final processor = imageProcessor;
+    if (processor == null) {
+      return <Recognition>[];
+    }
 
     // これらのTensorBufferで、推論結果を受け取る
     final outputLocations = TensorBufferFloat(_outputShapes[0]);
@@ -123,7 +140,7 @@ class Classifier {
     };
 
     // 推論！
-    _interpreter.runForMultipleInputs(inputs, outputs);
+    localInterpreter.runForMultipleInputs(inputs, outputs);
 
     // 推論結果をいくつ返すか
     final resultCount = min(numResults, numLocations.getIntValue(0));
@@ -146,9 +163,9 @@ class Classifier {
     for (var i = 0; i < resultCount; i++) {
       final score = outputScores.getDoubleValue(i);
       final labelIndex = outputClasses.getIntValue(i) + labelOffset;
-      final label = _labels.elementAt(labelIndex);
+      final label = localLabels.elementAt(labelIndex);
       if (score > threshold) {
-        final transformRect = imageProcessor.inverseTransformRect(
+        final transformRect = processor.inverseTransformRect(
           locations[i],
           image.height,
           image.width,
