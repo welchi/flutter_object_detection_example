@@ -8,16 +8,15 @@ import 'package:flutter_object_detection_example/data/model/classifier.dart';
 import 'package:flutter_object_detection_example/util/image_utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart' as legacy;
+import 'package:hooks_riverpod/misc.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final recognitionsProvider =
+final legacy.StateProvider<List<Recognition>> recognitionsProvider =
     legacy.StateProvider<List<Recognition>>((ref) => <Recognition>[]);
 
-final mlCameraProvider = FutureProvider.autoDispose.family<MLCamera, Size>((
-  ref,
-  size,
-) async {
+final FutureProviderFamily<MLCamera, Size> mlCameraProvider =
+    FutureProvider.autoDispose.family<MLCamera, Size>((ref, size) async {
   final cameras = await availableCameras();
   final cameraController = CameraController(
     cameras[0],
@@ -121,7 +120,7 @@ class MLCamera {
   static Future<List<Recognition>> inference(
     IsolateData isolateCamImgData,
   ) async {
-    var image = ImageUtils.convertYUV420ToImage(
+    var image = convertYUV420ToImage(
       isolateCamImgData.cameraImage,
     );
     if (Platform.isAndroid) {

@@ -11,8 +11,8 @@ class ObjectDetectionPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-    final AsyncValue<MLCamera> mlCamera = ref.watch(mlCameraProvider(size));
-    final List<Recognition> recognitions = ref.watch(recognitionsProvider);
+    final mlCamera = ref.watch(mlCameraProvider(size));
+    final recognitions = ref.watch(recognitionsProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),
