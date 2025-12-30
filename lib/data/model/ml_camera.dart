@@ -6,17 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/classifier.dart';
 import 'package:flutter_object_detection_example/util/image_utils.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/legacy.dart' as legacy;
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final StateProvider<List<Recognition>> recognitionsProvider =
-    StateProvider<List<Recognition>>(
-  (ref) => <Recognition>[],
-);
+final recognitionsProvider =
+    legacy.StateProvider<List<Recognition>>((ref) => <Recognition>[]);
 
-final AutoDisposeFutureProviderFamily<MLCamera, Size> mlCameraProvider =
-    FutureProvider.autoDispose.family<MLCamera, Size>((ref, size) async {
+final mlCameraProvider = FutureProvider.autoDispose.family<MLCamera, Size>((
+  ref,
+  size,
+) async {
   final cameras = await availableCameras();
   final cameraController = CameraController(
     cameras[0],
@@ -108,8 +109,10 @@ class MLCamera {
     );
 
     // 推論処理は重く、Isolateを使わないと画面が固まる
-    _ref.read(recognitionsProvider.notifier).state =
-        await compute(inference, isolateCamImgData);
+    _ref.read(recognitionsProvider.notifier).state = await compute(
+      inference,
+      isolateCamImgData,
+    );
     isPredicting = false;
   }
 
