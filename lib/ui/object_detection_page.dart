@@ -2,7 +2,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/ml_camera.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' show HookConsumerWidget;
 
 class ObjectDetectionPage extends HookConsumerWidget {
   const ObjectDetectionPage({super.key});
@@ -11,8 +12,8 @@ class ObjectDetectionPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-    final mlCamera = ref.watch(mlCameraProvider(size));
-    final recognitions = ref.watch(recognitionsProvider);
+    final AsyncValue<MLCamera> mlCamera = ref.watch(mlCameraProvider(size));
+    final List<Recognition> recognitions = ref.watch(recognitionsProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Object Detection'),

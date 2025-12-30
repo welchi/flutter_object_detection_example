@@ -6,15 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_object_detection_example/data/entity/recognition.dart';
 import 'package:flutter_object_detection_example/data/model/classifier.dart';
 import 'package:flutter_object_detection_example/util/image_utils.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final recognitionsProvider = StateProvider<List<Recognition>>(
+final StateProvider<List<Recognition>> recognitionsProvider =
+    StateProvider<List<Recognition>>(
   (ref) => <Recognition>[],
 );
 
-final mlCameraProvider =
+final AutoDisposeFutureProviderFamily<MLCamera, Size> mlCameraProvider =
     FutureProvider.autoDispose.family<MLCamera, Size>((ref, size) async {
   final cameras = await availableCameras();
   final cameraController = CameraController(
@@ -94,10 +95,16 @@ class MLCamera {
       return;
     }
     isPredicting = true;
+    final interpreter = classifier.interpreter;
+    final labels = classifier.labels;
+    if (interpreter == null || labels == null) {
+      isPredicting = false;
+      return;
+    }
     final isolateCamImgData = IsolateData(
       cameraImage: cameraImage,
-      interpreterAddress: classifier.interpreter.address,
-      labels: classifier.labels,
+      interpreterAddress: interpreter.address,
+      labels: labels,
     );
 
     // 推論処理は重く、Isolateを使わないと画面が固まる
