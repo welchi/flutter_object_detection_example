@@ -3,11 +3,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_object_detection_example/ui/object_detection_page.dart';
 
 class MyApp extends HookWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: true,
       title: 'MyApp',
       theme: ThemeData.from(
         colorScheme: const ColorScheme.light(),
@@ -18,7 +17,7 @@ class MyApp extends HookWidget {
       navigatorKey: GlobalKey<NavigatorState>(),
       initialRoute: ObjectDetectionPage.routeName,
       routes: {
-        ObjectDetectionPage.routeName: (context) => ObjectDetectionPage(),
+        ObjectDetectionPage.routeName: (context) => const ObjectDetectionPage(),
       },
     );
   }

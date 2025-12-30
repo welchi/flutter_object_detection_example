@@ -10,7 +10,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final recognitionsProvider = StateProvider<List<Recognition>>((ref) => []);
+final recognitionsProvider = StateProvider<List<Recognition>>(
+  (ref) => <Recognition>[],
+);
 
 final mlCameraProvider =
     FutureProvider.autoDispose.family<MLCamera, Size>((ref, size) async {
@@ -21,56 +23,73 @@ final mlCameraProvider =
     enableAudio: false,
   );
   await cameraController.initialize();
-  final mlCamera = MLCamera(
-    ref.read,
-    cameraController,
-    size,
-  );
-  return mlCamera;
+  ref.onDispose(cameraController.dispose);
+  return MLCamera.create(ref, cameraController, size);
 });
 
 class MLCamera {
-  MLCamera(
-    this._read,
+  MLCamera._(
+    this._ref,
     this.cameraController,
     this.cameraViewSize,
-  ) {
-    Future(() async {
-      classifier = Classifier();
-      ratio = Platform.isAndroid
-          ? cameraViewSize.width / cameraController.value.previewSize.height
-          : cameraViewSize.width / cameraController.value.previewSize.width;
-      actualPreviewSize = Size(
-        cameraViewSize.width,
-        cameraViewSize.width * ratio,
-      );
-      // 画像ストリーミングを開始
-      await cameraController.startImageStream(onLatestImageAvailable);
-    });
+    this.classifier,
+    this.ratio,
+    this.actualPreviewSize,
+  );
+
+  static Future<MLCamera> create(
+    Ref ref,
+    CameraController cameraController,
+    Size cameraViewSize,
+  ) async {
+    final classifier = Classifier();
+    await classifier.initialize();
+
+    final previewSize = cameraController.value.previewSize;
+    if (previewSize == null) {
+      throw StateError('Camera preview size is unavailable.');
+    }
+
+    final ratio = Platform.isAndroid
+        ? cameraViewSize.width / previewSize.height
+        : cameraViewSize.width / previewSize.width;
+    final actualPreviewSize = Size(
+      cameraViewSize.width,
+      cameraViewSize.width * ratio,
+    );
+
+    final mlCamera = MLCamera._(
+      ref,
+      cameraController,
+      cameraViewSize,
+      classifier,
+      ratio,
+      actualPreviewSize,
+    );
+    await cameraController.startImageStream(mlCamera.onLatestImageAvailable);
+    return mlCamera;
   }
-  final Reader _read;
+
+  final Ref _ref;
   final CameraController cameraController;
 
   /// スクリーンのサイズ
-  Size cameraViewSize;
+  final Size cameraViewSize;
 
   /// アスペクト比
-  double ratio;
+  final double ratio;
 
   /// 識別器
-  Classifier classifier;
+  final Classifier classifier;
 
   /// 現在推論中か否か
   bool isPredicting = false;
 
   /// カメラプレビューの表示サイズ
-  Size actualPreviewSize;
+  final Size actualPreviewSize;
 
   /// 画像ストリーミングに対する処理
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
-    if (classifier.interpreter == null || classifier.labels == null) {
-      return;
-    }
     if (isPredicting) {
       return;
     }
@@ -82,7 +101,7 @@ class MLCamera {
     );
 
     // 推論処理は重く、Isolateを使わないと画面が固まる
-    _read(recognitionsProvider).state =
+    _ref.read(recognitionsProvider.notifier).state =
         await compute(inference, isolateCamImgData);
     isPredicting = false;
   }
@@ -90,7 +109,8 @@ class MLCamera {
   /// Isolateへ渡す推論関数
   /// Isolateには、static関数か、クラスに属さないトップレベル関数しか渡せないため、staticに
   static Future<List<Recognition>> inference(
-      IsolateData isolateCamImgData) async {
+    IsolateData isolateCamImgData,
+  ) async {
     var image = ImageUtils.convertYUV420ToImage(
       isolateCamImgData.cameraImage,
     );
@@ -104,6 +124,7 @@ class MLCamera {
       ),
       labels: isolateCamImgData.labels,
     );
+    await classifier.initialize();
 
     return classifier.predict(image);
   }
@@ -111,9 +132,9 @@ class MLCamera {
 
 class IsolateData {
   IsolateData({
-    this.cameraImage,
-    this.interpreterAddress,
-    this.labels,
+    required this.cameraImage,
+    required this.interpreterAddress,
+    required this.labels,
   });
   final CameraImage cameraImage;
   final int interpreterAddress;

@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class Recognition {
-  Recognition(this._id, this._label, this._score, [this._location]);
+  Recognition(this._id, this._label, this._score, this._location);
   final int _id;
   int get id => _id;
   final String _label;

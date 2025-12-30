@@ -8,16 +8,16 @@ import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
 class Classifier {
   Classifier({
-    Interpreter interpreter,
-    List<String> labels,
+    Interpreter? interpreter,
+    List<String>? labels,
   }) {
-    loadModel(interpreter);
-    loadLabels(labels);
+    _interpreter = interpreter;
+    _labels = labels;
   }
-  Interpreter _interpreter;
-  Interpreter get interpreter => _interpreter;
-  List<String> _labels;
-  List<String> get labels => _labels;
+  Interpreter? _interpreter;
+  Interpreter? get interpreter => _interpreter;
+  List<String>? _labels;
+  List<String>? get labels => _labels;
   static const String modelFileName = 'detect.tflite';
   static const String labelFileName = 'labelmap.txt';
 
@@ -28,19 +28,24 @@ class Classifier {
   static const double threshold = 0.6;
 
   /// 画像の前処理用
-  ImageProcessor imageProcessor;
+  ImageProcessor? imageProcessor;
 
   /// インタプリタから受け取るTensorの次元
-  List<List<int>> _outputShapes;
+  List<List<int>> _outputShapes = const [];
 
   /// インタプリタから受け取るTensorのデータ型
-  List<TfLiteType> _outputTypes;
+  List<TfLiteType> _outputTypes = const [];
 
   /// 推論結果をいくつ表示するか
   static const int numResults = 10;
 
   /// assetsからインタプリタを読み込み
-  Future<void> loadModel(Interpreter interpreter) async {
+  Future<void> initialize() async {
+    await loadModel(_interpreter);
+    await loadLabels(_labels);
+  }
+
+  Future<void> loadModel(Interpreter? interpreter) async {
     try {
       _interpreter = interpreter ??
           await Interpreter.fromAsset(
@@ -60,7 +65,7 @@ class Classifier {
   }
 
   /// assetsからラベルを読み込み
-  Future<void> loadLabels(List<String> labels) async {
+  Future<void> loadLabels(List<String>? labels) async {
     try {
       _labels = labels ?? await FileUtil.loadLabels('assets/$labelFileName');
     } on Exception catch (e) {
@@ -98,8 +103,11 @@ class Classifier {
 
   /// 物体検出を行う
   List<Recognition> predict(image_lib.Image image) {
-    if (_interpreter == null) {
-      return null;
+    if (_interpreter == null ||
+        _labels == null ||
+        _outputShapes.isEmpty ||
+        _outputTypes.isEmpty) {
+      return <Recognition>[];
     }
 
     // ImageからTensorImageを作成
@@ -146,7 +154,7 @@ class Classifier {
     for (var i = 0; i < resultCount; i++) {
       final score = outputScores.getDoubleValue(i);
       final labelIndex = outputClasses.getIntValue(i) + labelOffset;
-      final label = _labels.elementAt(labelIndex);
+      final label = _labels!.elementAt(labelIndex);
       if (score > threshold) {
         final transformRect = imageProcessor.inverseTransformRect(
           locations[i],

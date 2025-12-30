@@ -11,7 +11,7 @@ class ImageUtils {
     final height = cameraImage.height;
 
     final uvRowStride = cameraImage.planes[1].bytesPerRow;
-    final uvPixelStride = cameraImage.planes[1].bytesPerPixel;
+    final uvPixelStride = cameraImage.planes[1].bytesPerPixel ?? 1;
 
     final image = image_lib.Image(width, height);
 
